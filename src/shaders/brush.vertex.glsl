@@ -8,7 +8,7 @@ uniform sampler2D colorTexture;
 uniform sampler2D depthTexture;
 uniform sampler2D xFieldTexture;
 
-varying vec3 vColor;
+varying vec4 vColor;
 varying float vRotation;
 varying float vPointSize;
 
@@ -25,14 +25,16 @@ void main()
 
     // Compute color
     vec2 sampleCoord = (floor(viewportCoords) + 0.5) / resolution;
-    vColor = vec3(texture2D(colorTexture, sampleCoord).rgb);
+//    vColor = vec3(texture2D(colorTexture, sampleCoord).rgb);
+    vColor = texture2D(colorTexture, viewportCoords);
+//    vColor = vec3(texture2D(colorTexture, vec2(0.2,0.2)).rgb);
 //    vColor = vec3(1.0);
 
-    // Compute rotation from grad
+    // TODO Compute rotation from grad
     vRotation = 0.;
 
-    // Compute pont size from depth
-    vPointSize = 20.;
+    // TODO Compute pont size from depth
+    vPointSize = 40.;
 
     // Point size
     gl_PointSize = vPointSize * ( 300.0 / length( mvPosition.xyz ) );

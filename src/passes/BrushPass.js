@@ -15,7 +15,8 @@ import uvgradxv       from '../shaders/uvgradx.vertex.glsl';
 import uvgradxf       from '../shaders/uvgradx.fragment.glsl';
 import uvgradyv       from '../shaders/uvgrady.vertex.glsl';
 import uvgradyf       from '../shaders/uvgrady.fragment.glsl';
-import brushTexture   from '../../img/brush-stroke-dry.png';
+// import brushTexture   from '../../img/brush-stroke-dry.png';
+import brushTexture   from '../../img/snowflake1.png';
 import brushVertex    from '../shaders/brush.vertex.glsl';
 import brushFragment  from '../shaders/brush.fragment.glsl';
 
@@ -40,12 +41,17 @@ let BrushPass = function(
     this.depthTexture.type = UnsignedShortType;
     this.colorTarget = new WebGLRenderTarget(this.WIDTH, this.HEIGHT, {
         format: RGBFormat,
-        minFilter: NearestFilter,
-        magFilter: NearestFilter,
+        // minFilter: NearestFilter,
+        // magFilter: NearestFilter,
         generateMipmaps: false,
         stencilBuffer: false,
-        depthBuffer: true,
-        depthTexture: this.depthTexture
+        // depthBuffer: true,
+        // depthTexture: this.depthTexture
+    });
+    // TODO render to depth target
+    //   https://github.com/mrdoob/three.js/blob/master/examples/webgl_depth_texture.html
+    this.depthTarget = new WebGLRenderTarget(this.WIDTH, this.HEIGHT, {
+
     });
 
     // grad uv
@@ -88,8 +94,8 @@ let BrushPass = function(
         vertexShader: brushVertex,
         fragmentShader: brushFragment,
         blending: NoBlending,
-        depthTest: true, // todo check perf
-        transparent: false,
+        depthTest: false, // todo check perf
+        transparent: true,
         vertexColors: true
     });
     const radius = 200;
@@ -125,9 +131,13 @@ BrushPass.prototype = Object.assign(Object.create(Pass.prototype), {
     {
         let oldAutoClear = renderer.autoClear;
         renderer.autoClear = false;
+        renderer.autoClearColor = false;
+        renderer.autoClearDepth = false;
 
+        renderer.clear();
         // let oldOverrideMaterial = this.scene.overrideMaterial;
         renderer.setRenderTarget(this.colorTarget);
+        renderer.clear();
         // this.scene.overrideMaterial = this.uvGradXMaterial;
         renderer.render(this.scene, this.camera);
         // this.scene.overrideMaterial = oldOverrideMaterial;
