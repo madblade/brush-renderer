@@ -15,8 +15,8 @@ import uvgradxv       from '../shaders/uvgradx.vertex.glsl';
 import uvgradxf       from '../shaders/uvgradx.fragment.glsl';
 import uvgradyv       from '../shaders/uvgrady.vertex.glsl';
 import uvgradyf       from '../shaders/uvgrady.fragment.glsl';
-// import brushTexture   from '../../img/brush-stroke-dry.png';
-import brushTexture   from '../../img/snowflake1.png';
+import brushTexture   from '../../img/brush-stroke-dry-256.png';
+// import brushTexture   from '../../img/snowflake1.png';
 import brushVertex    from '../shaders/brush.vertex.glsl';
 import brushFragment  from '../shaders/brush.fragment.glsl';
 
