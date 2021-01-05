@@ -16,6 +16,12 @@ import { loadObjects, loadSkinnedMesh, loadWalls } from './loader';
 import { EffectComposer }                          from 'three/examples/jsm/postprocessing/EffectComposer';
 import { GlitchPass }                              from 'three/examples/jsm/postprocessing/GlitchPass';
 import { RenderPass }                              from 'three/examples/jsm/postprocessing/RenderPass';
+import { LuminosityShader }                        from 'three/examples/jsm/shaders/LuminosityShader';
+import { ShaderPass }                              from 'three/examples/jsm/postprocessing/ShaderPass';
+import { SobelOperatorShader }                     from 'three/examples/jsm/shaders/SobelOperatorShader';
+import { BokehDepthShader }                        from 'three/examples/jsm/shaders/BokehShader2';
+import { BokehPass }                               from 'three/examples/jsm/postprocessing/BokehPass';
+import { BrushPass }                               from './passes/BrushPass';
 
 // screen size
 let WIDTH = window.innerWidth;
@@ -72,10 +78,21 @@ function initRenderer()
 function initComposer()
 {
     composer = new EffectComposer(renderer);
-    const renderPass = new RenderPass(scene, camera);
-    composer.addPass(renderPass);
+    // const renderPass = new RenderPass(scene, camera);
+    // composer.addPass(renderPass);
     // const glitchPass = new GlitchPass();
     // composer.addPass(glitchPass);
+
+    // const grayScalePass = new ShaderPass(LuminosityShader);
+    // composer.addPass(grayScalePass);
+
+    // const sobelPass = new ShaderPass(SobelOperatorShader);
+    // sobelPass.uniforms['resolution'].value.x = window.innerWidth * window.devicePixelRatio;
+    // sobelPass.uniforms['resolution'].value.y = window.innerHeight * window.devicePixelRatio;
+    // composer.addPass(sobelPass);
+
+    const brushPass = new BrushPass(scene, camera);
+    composer.addPass(brushPass);
 }
 
 function initScene()
