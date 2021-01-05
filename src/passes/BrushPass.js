@@ -5,13 +5,19 @@ import {
     DepthFormat,
     NearestFilter,
     RGBFormat,
-    UnsignedShortType, Scene, ShaderMaterial
+    UnsignedShortType,
+    Scene, ShaderMaterial, PerspectiveCamera, TextureLoader,
+    NoBlending, BufferGeometry,
+    Points, Float32BufferAttribute, Vector2
 } from 'three';
 import { Pass }       from 'three/examples/jsm/postprocessing/Pass';
 import uvgradxv       from '../shaders/uvgradx.vertex.glsl';
 import uvgradxf       from '../shaders/uvgradx.fragment.glsl';
 import uvgradyv       from '../shaders/uvgrady.vertex.glsl';
 import uvgradyf       from '../shaders/uvgrady.fragment.glsl';
+import brushTexture   from '../../img/brush-stroke-dry.png';
+import brushVertex    from '../shaders/brush.vertex.glsl';
+import brushFragment  from '../shaders/brush.fragment.glsl';
 
 let BrushPass = function(
     objectScene,
@@ -24,6 +30,7 @@ let BrushPass = function(
     this.scene = objectScene;
     this.camera = camera;
     this.needsSwap = false;
+    this.NB_BRUSHES = 1000;
 
     // color + depth
     this.WIDTH = window.innerWidth;
@@ -62,7 +69,44 @@ let BrushPass = function(
     });
 
     // particles
-    this.sceneParticle = new Scene();
+    this.sceneBrush = new Scene();
+    this.cameraBrush = new PerspectiveCamera(40, this.WIDTH / this.HEIGHT, 1, 10000);
+    this.cameraBrush.position.z = 300;
+    this.brushMaterial = new ShaderMaterial({
+        uniforms: {
+            resolution: {
+                value: new Vector2(
+                    this.WIDTH * window.devicePixelRatio,
+                    this.HEIGHT * window.devicePixelRatio
+                )
+            },
+            brushTexture: { value: new TextureLoader().load(brushTexture) },
+            colorTexture: { value: this.colorTarget.texture },
+            depthTexture: { value: this.colorTarget.depthTexture },
+            xFieldTexture: { value: this.xFieldTarget.texture }
+        },
+        vertexShader: brushVertex,
+        fragmentShader: brushFragment,
+        blending: NoBlending,
+        depthTest: true, // todo check perf
+        transparent: false,
+        vertexColors: true
+    });
+    const radius = 200;
+    this.brushGeometry = new BufferGeometry();
+    const positions = [];
+    // const sizes = [];
+    for (let i = 0; i < this.NB_BRUSHES; ++i) {
+        positions.push((Math.random() * 2 - 1) * radius);
+        positions.push((Math.random() * 2 - 1) * radius);
+        positions.push((Math.random() * 2 - 1) * radius);
+        // sizes.push(20);
+    }
+
+    this.brushGeometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+    // this.brushGeometry.setAttribute('size', new Float32BufferAttribute(sizes, 1).setUsage(DynamicDrawUsage));
+    const particleSystem = new Points(this.brushGeometry, this.brushMaterial);
+    this.sceneBrush.add(particleSystem);
 
     // legacy
     this.overrideMaterial = overrideMaterial;
@@ -82,11 +126,16 @@ BrushPass.prototype = Object.assign(Object.create(Pass.prototype), {
         let oldAutoClear = renderer.autoClear;
         renderer.autoClear = false;
 
-        let oldOverrideMaterial = this.scene.overrideMaterial;
-        // renderer.setRenderTarget(this.colorTarget);
-        this.scene.overrideMaterial = this.uvGradXMaterial;
+        // let oldOverrideMaterial = this.scene.overrideMaterial;
+        renderer.setRenderTarget(this.colorTarget);
+        // this.scene.overrideMaterial = this.uvGradXMaterial;
         renderer.render(this.scene, this.camera);
-        this.scene.overrideMaterial = oldOverrideMaterial;
+        // this.scene.overrideMaterial = oldOverrideMaterial;
+
+        renderer.setRenderTarget(null);
+        renderer.render(this.sceneBrush, this.cameraBrush);
+
+        // TODO particle perturbation
 
         renderer.autoClear = oldAutoClear;
     },
