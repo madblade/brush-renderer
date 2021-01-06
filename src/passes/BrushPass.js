@@ -7,8 +7,9 @@ import {
     RGBFormat,
     UnsignedShortType,
     Scene, ShaderMaterial, PerspectiveCamera, TextureLoader,
-    NoBlending, BufferGeometry,
-    Points, Float32BufferAttribute, Vector2, AdditiveBlending, NormalBlending, CustomBlending, MaxEquation
+    BufferGeometry,
+    Points, Float32BufferAttribute, Vector2,
+    CustomBlending, MaxEquation
 } from 'three';
 import { Pass }       from 'three/examples/jsm/postprocessing/Pass';
 import uvgradxv       from '../shaders/uvgradx.vertex.glsl';
@@ -41,17 +42,12 @@ let BrushPass = function(
     this.depthTexture.type = UnsignedShortType;
     this.colorTarget = new WebGLRenderTarget(this.WIDTH, this.HEIGHT, {
         format: RGBFormat,
-        // minFilter: NearestFilter,
-        // magFilter: NearestFilter,
+        minFilter: NearestFilter,
+        magFilter: NearestFilter,
         generateMipmaps: false,
         stencilBuffer: false,
-        // depthBuffer: true,
-        // depthTexture: this.depthTexture
-    });
-    // TODO render to depth target
-    //   https://github.com/mrdoob/three.js/blob/master/examples/webgl_depth_texture.html
-    this.depthTarget = new WebGLRenderTarget(this.WIDTH, this.HEIGHT, {
-
+        depthBuffer: true,
+        depthTexture: this.depthTexture
     });
 
     // grad uv
@@ -106,7 +102,8 @@ let BrushPass = function(
     for (let i = 0; i < this.NB_BRUSHES; ++i) {
         positions.push((Math.random() * 2 - 1) * radius);
         positions.push((Math.random() * 2 - 1) * radius);
-        positions.push((Math.random() * 2 - 1) * radius);
+        positions.push(0.0);
+        // positions.push((Math.random() * 2 - 1) * radius);
         // sizes.push(20);
     }
 
@@ -135,16 +132,29 @@ BrushPass.prototype = Object.assign(Object.create(Pass.prototype), {
         renderer.autoClearColor = false;
         renderer.autoClearDepth = false;
 
-        renderer.clear();
-        // let oldOverrideMaterial = this.scene.overrideMaterial;
+        renderer.clear(); // clear screen
+
         renderer.setRenderTarget(this.colorTarget);
-        renderer.clear();
-        // this.scene.overrideMaterial = this.uvGradXMaterial;
+        renderer.clear(); // clear color target
+
+        // render color scene
         renderer.render(this.scene, this.camera);
+
+        // render depth
+        // this.depthMaterial.uniforms.tDiffuse.value = this.colorTarget.texture;
+        // this.depthMaterial.uniforms.tDepth.value = this.colorTarget.depthTexture;
+        // renderer.setRenderTarget(this.depthTarget);
+        // renderer.render(this.depthScene, this.depthCamera);
+
+        // TODO render uv grad
+        // let oldOverrideMaterial = this.scene.overrideMaterial;
+        // this.scene.overrideMaterial = this.uvGradXMaterial;
         // this.scene.overrideMaterial = oldOverrideMaterial;
 
+        // render brush scene
         renderer.setRenderTarget(null);
         renderer.render(this.sceneBrush, this.cameraBrush);
+
 
         // TODO particle perturbation
 
