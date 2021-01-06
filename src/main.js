@@ -59,7 +59,7 @@ animate();
 function initRenderer()
 {
     renderer = new WebGLRenderer({
-        antialias: true,
+        antialias: true
     });
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(WIDTH, HEIGHT);

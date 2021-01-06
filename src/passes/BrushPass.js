@@ -8,7 +8,7 @@ import {
     UnsignedShortType,
     Scene, ShaderMaterial, PerspectiveCamera, TextureLoader,
     NoBlending, BufferGeometry,
-    Points, Float32BufferAttribute, Vector2
+    Points, Float32BufferAttribute, Vector2, AdditiveBlending, NormalBlending, CustomBlending, MaxEquation
 } from 'three';
 import { Pass }       from 'three/examples/jsm/postprocessing/Pass';
 import uvgradxv       from '../shaders/uvgradx.vertex.glsl';
@@ -31,7 +31,7 @@ let BrushPass = function(
     this.scene = objectScene;
     this.camera = camera;
     this.needsSwap = false;
-    this.NB_BRUSHES = 1000;
+    this.NB_BRUSHES = 5000;
 
     // color + depth
     this.WIDTH = window.innerWidth;
@@ -93,10 +93,11 @@ let BrushPass = function(
         },
         vertexShader: brushVertex,
         fragmentShader: brushFragment,
-        blending: NoBlending,
+        blending: CustomBlending,
+        blendEquation: MaxEquation,
         depthTest: false, // todo check perf
         transparent: true,
-        vertexColors: true
+        vertexColors: false
     });
     const radius = 200;
     this.brushGeometry = new BufferGeometry();

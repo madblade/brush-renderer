@@ -17,8 +17,9 @@ void main()
     vec4 rotatedTexture = texture2D(brushTexture, gl_PointCoord);
     float norm = rotatedTexture.x + rotatedTexture.y + rotatedTexture.z;
 //    float alpha = step(0.1, norm);// * vColor.w;
-    if (norm < 0.2) discard;
+//    if (norm < 0.2) discard;
     gl_FragColor = vec4(vColor.xyz, 1.0) * rotatedTexture;
+//    gl_FragColor.a = 1.0;
 //    gl_FragColor.w = alpha;
 //    gl_FragColor = vec4(vColor.xyz * rotatedTexture, vColor.w);
 //    gl_FragColor = vec4(1.0);
