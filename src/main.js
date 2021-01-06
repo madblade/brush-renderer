@@ -58,13 +58,21 @@ let settings = {
     size: brushSize,
     attenuation: brushPower,
 };
+let isDoingCountdown = false;
+let timeout = null;
+function updateParticleNumber()
+{
+    console.log('Rebuilding brushes…');
+    brushPass.rebuildParticles(settings.number);
+}
 function updateUniforms()
 {
-    console.log('Updating effect renderer…');
     if (settings.number !== brushNumber)
     {
-        // TODO rebuild brushes.
         brushNumber = settings.number;
+        if (isDoingCountdown) clearTimeout(timeout);
+        else isDoingCountdown = true;
+        timeout = setTimeout(updateParticleNumber, 200);
     }
 
     if (settings.brushOrientation === 'grad v')

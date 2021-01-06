@@ -100,8 +100,8 @@ let BrushPass = function(
     }
 
     this.brushGeometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
-    const particleSystem = new Points(this.brushGeometry, this.brushMaterial);
-    this.sceneBrush.add(particleSystem);
+    this.particleSystem = new Points(this.brushGeometry, this.brushMaterial);
+    this.sceneBrush.add(this.particleSystem);
 
     // legacy
     this.clear = false;
@@ -110,6 +110,23 @@ let BrushPass = function(
 BrushPass.prototype = Object.assign(Object.create(Pass.prototype), {
 
     constructor: BrushPass,
+
+    rebuildParticles(nbParticles)
+    {
+        this.sceneBrush.remove(this.particleSystem);
+
+        this.NB_BRUSHES = nbParticles;
+        this.brushGeometry = new BufferGeometry();
+        const positions = [];
+        for (let i = 0; i < this.NB_BRUSHES; ++i) {
+            positions.push((Math.random() * 2 - 1) * 200);
+            positions.push((Math.random() * 2 - 1) * 200);
+            positions.push(0.0);
+        }
+        this.brushGeometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
+        this.particleSystem = new Points(this.brushGeometry, this.brushMaterial);
+        this.sceneBrush.add(this.particleSystem);
+    },
 
     render(renderer)
     {
