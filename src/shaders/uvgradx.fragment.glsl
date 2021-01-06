@@ -5,5 +5,5 @@ const vec3 white = vec3(1.);
 
 void main()
 {
-    gl_FragColor = vec4(mix(black, white, vUv.x), 1.0);
+    gl_FragColor = vec4(mix(black, white, vUv.y), 1.0);
 }

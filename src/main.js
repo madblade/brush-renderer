@@ -45,7 +45,7 @@ let lightPosition;
 
 // light & animation
 let light;
-let lightHelper;
+// let lightHelper;
 let ambient;
 let lights = [];
 let mixers = [];

@@ -9,7 +9,7 @@ import {
     Scene, ShaderMaterial, PerspectiveCamera, TextureLoader,
     BufferGeometry,
     Points, Float32BufferAttribute, Vector2,
-    CustomBlending, MaxEquation
+    CustomBlending, MaxEquation,
 } from 'three';
 import { Pass }       from 'three/examples/jsm/postprocessing/Pass';
 import uvgradxv       from '../shaders/uvgradx.vertex.glsl';
@@ -32,7 +32,7 @@ let BrushPass = function(
     this.scene = objectScene;
     this.camera = camera;
     this.needsSwap = false;
-    this.NB_BRUSHES = 5000;
+    this.NB_BRUSHES = 100000;
 
     // color + depth
     this.WIDTH = window.innerWidth;
@@ -91,7 +91,7 @@ let BrushPass = function(
         fragmentShader: brushFragment,
         blending: CustomBlending,
         blendEquation: MaxEquation,
-        depthTest: false, // todo check perf
+        depthTest: false,
         transparent: true,
         vertexColors: false
     });
@@ -132,24 +132,21 @@ BrushPass.prototype = Object.assign(Object.create(Pass.prototype), {
         renderer.autoClearColor = false;
         renderer.autoClearDepth = false;
 
-        renderer.clear(); // clear screen
+        // renderer.clear(); // clear screen
 
         renderer.setRenderTarget(this.colorTarget);
         renderer.clear(); // clear color target
 
-        // render color scene
+        // render color + depth
         renderer.render(this.scene, this.camera);
 
-        // render depth
-        // this.depthMaterial.uniforms.tDiffuse.value = this.colorTarget.texture;
-        // this.depthMaterial.uniforms.tDepth.value = this.colorTarget.depthTexture;
-        // renderer.setRenderTarget(this.depthTarget);
-        // renderer.render(this.depthScene, this.depthCamera);
-
-        // TODO render uv grad
-        // let oldOverrideMaterial = this.scene.overrideMaterial;
-        // this.scene.overrideMaterial = this.uvGradXMaterial;
-        // this.scene.overrideMaterial = oldOverrideMaterial;
+        // render grad uv
+        let oldOverrideMaterial = this.scene.overrideMaterial;
+        this.scene.overrideMaterial = this.uvGradXMaterial;
+        renderer.setRenderTarget(this.xFieldTarget);
+        // renderer.clearDepth();
+        renderer.render(this.scene, this.camera);
+        this.scene.overrideMaterial = oldOverrideMaterial;
 
         // render brush scene
         renderer.setRenderTarget(null);
