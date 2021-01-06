@@ -14,7 +14,7 @@ module.exports = function(env) {
                 template: './src/index.html',
                 favicon: './img/favicon.png',
                 baseUrl: env.development ?
-                    '/' : 'https://madblade.github.io/shadow-volume/'
+                    '/' : 'https://madblade.github.io/brush-renderer/'
             }),
             new webpack.HotModuleReplacementPlugin()
         ],
