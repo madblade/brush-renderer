@@ -146,7 +146,6 @@ function loadObjects()
 
 function loadSkinnedMesh(
     scene,
-    // sceneShadows, shadowCasters, lightPosition,
     mixers
 )
 {
@@ -154,7 +153,6 @@ function loadSkinnedMesh(
     {
         let mixer = new AnimationMixer(mesh);
         mixer.clipAction(mesh.animations[0]).play();
-
         moveMesh(mesh);
 
         let container = new Group();

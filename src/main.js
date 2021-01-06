@@ -5,7 +5,7 @@
 import {
     AmbientLight,
     PCFSoftShadowMap,
-    PerspectiveCamera, PointLight, PointLightHelper,
+    PerspectiveCamera, PointLight,
     Scene,
     Vector3,
     WebGLRenderer
@@ -14,14 +14,8 @@ import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls';
 
 import { loadObjects, loadSkinnedMesh, loadWalls } from './loader';
 import { EffectComposer }                          from 'three/examples/jsm/postprocessing/EffectComposer';
-import { GlitchPass }                              from 'three/examples/jsm/postprocessing/GlitchPass';
-import { RenderPass }                              from 'three/examples/jsm/postprocessing/RenderPass';
-import { LuminosityShader }                        from 'three/examples/jsm/shaders/LuminosityShader';
-import { ShaderPass }                              from 'three/examples/jsm/postprocessing/ShaderPass';
-import { SobelOperatorShader }                     from 'three/examples/jsm/shaders/SobelOperatorShader';
-import { BokehDepthShader }                        from 'three/examples/jsm/shaders/BokehShader2';
-import { BokehPass }                               from 'three/examples/jsm/postprocessing/BokehPass';
 import { BrushPass }                               from './passes/BrushPass';
+import { GUI }                                     from 'three/examples/jsm/libs/dat.gui.module';
 
 // screen size
 let WIDTH = window.innerWidth;
@@ -45,16 +39,90 @@ let lightPosition;
 
 // light & animation
 let light;
-// let lightHelper;
 let ambient;
 let lights = [];
 let mixers = [];
 
 // composers
 let composer;
+let brushPass;
 
-init();
-animate();
+// gui
+let brushSize = 20.;
+let brushPower = 2.;
+let brushOrientation = 'grad u';
+let brushNumber = 100000;
+let settings = {
+    number: brushNumber,
+    orientation: brushOrientation,
+    size: brushSize,
+    attenuation: brushPower,
+};
+function updateUniforms()
+{
+    console.log('Updating effect renderer…');
+    if (settings.number !== brushNumber)
+    {
+        // TODO rebuild brushes.
+        brushNumber = settings.number;
+    }
+
+    if (settings.brushOrientation === 'grad v')
+    {
+        brushOrientation = settings.brushOrientation;
+        brushPass.uvGradXMaterial.uniforms.useV.value = true;
+        brushPass.uvGradXMaterial.uniformsNeedUpdate = true;
+        brushPass.brushMaterial.uniforms.horizontalStrokes.value = false;
+        // brushPass.brushMaterial.uniformsNeedUpdate = true;
+    }
+    else if (settings.brushOrientation === 'grad u')
+    {
+        brushOrientation = settings.brushOrientation;
+        brushPass.uvGradXMaterial.uniforms.useV.value = false;
+        brushPass.uvGradXMaterial.uniformsNeedUpdate = true;
+        brushPass.brushMaterial.uniforms.horizontalStrokes.value = false;
+        // brushPass.brushMaterial.uniformsNeedUpdate = true;
+    }
+    else if (settings.brushOrientation === 'horizontal')
+    {
+        brushPass.brushMaterial.uniforms.horizontalStrokes.value = true;
+        // brushPass.brushMaterial.uniformsNeedUpdate = true;
+    }
+
+    brushPass.brushMaterial.uniforms.attenuation.value = settings.attenuation;
+    brushPass.brushMaterial.uniforms.pointSize.value = settings.size;
+    brushPass.brushMaterial.uniformsNeedUpdate = true;
+}
+function initGUI()
+{
+    const gui = new GUI();
+    const folder1 = gui.addFolder('Brush settings');
+    // const folder2 = gui.addFolder('Brush settings');
+    const brushOrientations = [
+        'horizontal', 'grad u', 'grad v'
+    ];
+    folder1.add(settings, 'number', 1000, 100000, 100).onChange(function(value)
+    {
+        settings.number = value;
+        updateUniforms();
+    });
+    folder1.add(settings, 'orientation').options(brushOrientations).onChange(function(value)
+    {
+        settings.brushOrientation = value;
+        updateUniforms();
+    });
+    folder1.add(settings, 'size', 1, 20, 1).onChange(function(value)
+    {
+        settings.size = value;
+        updateUniforms();
+    });
+    folder1.add(settings, 'attenuation', 1, 3, 0.1).onChange(function(value)
+    {
+        settings.attenuation = value;
+        updateUniforms();
+    });
+    gui.open();
+}
 
 function initRenderer()
 {
@@ -79,20 +147,7 @@ function initRenderer()
 function initComposer()
 {
     composer = new EffectComposer(renderer);
-    // const renderPass = new RenderPass(scene, camera);
-    // composer.addPass(renderPass);
-    // const glitchPass = new GlitchPass();
-    // composer.addPass(glitchPass);
-
-    // const grayScalePass = new ShaderPass(LuminosityShader);
-    // composer.addPass(grayScalePass);
-
-    // const sobelPass = new ShaderPass(SobelOperatorShader);
-    // sobelPass.uniforms['resolution'].value.x = window.innerWidth * window.devicePixelRatio;
-    // sobelPass.uniforms['resolution'].value.y = window.innerHeight * window.devicePixelRatio;
-    // composer.addPass(sobelPass);
-
-    const brushPass = new BrushPass(scene, camera);
+    brushPass = new BrushPass(scene, camera, settings.number);
     composer.addPass(brushPass);
 }
 
@@ -114,8 +169,6 @@ function initScene()
     light.shadow.mapSize.height = SHADOW_MAP_HEIGHT;
     lights.push(light);
     scene.add(light);
-    // lightHelper = new PointLightHelper(light, 5);
-    // scene.add(lightHelper);
 
     // Ambient for the shadowed region
     ambient = new AmbientLight(0x404040);
@@ -130,6 +183,7 @@ function init()
     initRenderer();
     initScene();
     initComposer();
+    initGUI();
 
     let walls = loadWalls();
     walls.forEach(w => scene.add(w));
@@ -139,7 +193,7 @@ function init()
         scene.add(o);
     });
 
-    // loadSkinnedMesh(scene, mixers);
+    loadSkinnedMesh(scene, mixers);
 }
 
 let time = 0;
@@ -152,7 +206,6 @@ function animate()
     let delta = now - lastTime;
     lastTime = now;
     time += delta * 0.001;
-    // time = 0.001;
     lightPosition.x = Math.sin(time) * 10.0;
     lightPosition.z = Math.cos(time) * 10.0 + 4.0;
     lightPosition.y = Math.cos(time) * Math.sin(time) * 10.0;
@@ -168,5 +221,7 @@ function animate()
 
     // Perform.
     composer.render();
-    // renderer.render(scene, camera);
 }
+
+init();
+animate();
