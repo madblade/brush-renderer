@@ -1,6 +1,5 @@
 
 uniform bool useV;
-
 varying vec2 vUv;
 
 const vec3 black = vec3(0.);

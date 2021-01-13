@@ -55,9 +55,12 @@ void main()
             Gy[0][2] * tx0y2 + Gy[1][2] * tx1y2 + Gy[2][2] * tx2y2;
         float mag = sqrt((gradX * gradX) + (gradY * gradY));
         vRotation = atan(gradX, gradY);
+
+        // if (mag < 0.05) vRotation = 0.;
+        // if (mag > 0.05) vRotation += 3.1415 / 4.0;
     }
 
-    // TODO different brush textures
+    // TODO put here different brush textures
 
     // Point size from depth
     vPointSize = pointSize; // 40.;

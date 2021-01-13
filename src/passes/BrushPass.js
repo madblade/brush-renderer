@@ -1,5 +1,4 @@
 import {
-    Color,
     DepthTexture,
     WebGLRenderTarget,
     DepthFormat,
@@ -9,7 +8,7 @@ import {
     CustomBlending, MaxEquation,
     Scene, ShaderMaterial, PerspectiveCamera, TextureLoader,
     BufferGeometry,
-    Points, Float32BufferAttribute, Vector2,
+    Points, Float32BufferAttribute, Vector2, UniformsUtils, ShaderLib,
 } from 'three';
 import { Pass }       from 'three/examples/jsm/postprocessing/Pass';
 import uvgradxv       from '../shaders/uvgradx.vertex.glsl';
@@ -21,7 +20,7 @@ import brushFragment  from '../shaders/brush.fragment.glsl';
 let BrushPass = function(
     objectScene,
     camera,
-    numberBrushes
+    settings,
 )
 {
     Pass.call(this);
@@ -29,7 +28,8 @@ let BrushPass = function(
     this.scene = objectScene;
     this.camera = camera;
     this.needsSwap = false;
-    this.NB_BRUSHES = numberBrushes;
+    this.NB_BRUSHES = settings.number;
+    this.drawBrushesOverScene = settings.drawOver;
 
     // color + depth
     this.WIDTH = window.innerWidth;
@@ -57,9 +57,33 @@ let BrushPass = function(
         depthBuffer: false
     });
     this.uvGradXMaterial = new ShaderMaterial({
-        uniforms: { useV: { value: false } },
-        vertexShader: uvgradxv,
+        lights: true,
+        uniforms:
+            UniformsUtils.merge([
+                ShaderLib.lambert.uniforms,
+                { useV: { value: settings.brushOrientation === 'grad v' } }
+            ]),
+        vertexShader: `
+                #include <common>
+                ${uvgradxv}
+            `,
         fragmentShader: uvgradxf,
+        transparent: true,
+    });
+    this.uvGradXMaterial2 = new ShaderMaterial({
+        lights: true,
+        uniforms:
+            UniformsUtils.merge([
+                ShaderLib.lambert.uniforms,
+                { useV: { value: settings.brushOrientation === 'grad v' } }
+            ]),
+        vertexShader: `
+                #include <common>
+                ${uvgradxv}
+            `,
+        fragmentShader: uvgradxf,
+        skinning: true,
+        transparent: true
     });
 
     // particles
@@ -78,9 +102,9 @@ let BrushPass = function(
             colorTexture: { value: this.colorTarget.texture },
             depthTexture: { value: this.colorTarget.depthTexture },
             xFieldTexture: { value: this.xFieldTarget.texture },
-            horizontalStrokes: { value: false },
-            attenuation: { value: 2.0 },
-            pointSize: { value: 20.0 }
+            horizontalStrokes: { value: settings.brushOrientation === 'horizontal' },
+            attenuation: { value: settings.attenuation },
+            pointSize: { value: settings.size }
         },
         vertexShader: brushVertex,
         fragmentShader: brushFragment,
@@ -141,12 +165,34 @@ BrushPass.prototype = Object.assign(Object.create(Pass.prototype), {
         // render color + depth
         renderer.render(this.scene, this.camera);
 
+        if (this.drawBrushesOverScene)
+        {
+            renderer.setRenderTarget(null);
+            renderer.render(this.scene, this.camera);
+        }
+
         // render grad uv
-        let oldOverrideMaterial = this.scene.overrideMaterial;
-        this.scene.overrideMaterial = this.uvGradXMaterial;
+        let oldMaterials = {};
+        this.scene.traverse(o => {
+            if (o.isMesh && !o.isSkinnedMesh)
+            {
+                oldMaterials[o.uuid] = o.material;
+                o.material = this.uvGradXMaterial;
+            } else if (o.isSkinnedMesh)
+            {
+                oldMaterials[o.uuid] = o.material;
+                o.material = this.uvGradXMaterial2;
+            }
+        });
         renderer.setRenderTarget(this.xFieldTarget);
+        // renderer.setRenderTarget(null);
         renderer.render(this.scene, this.camera);
-        this.scene.overrideMaterial = oldOverrideMaterial;
+        this.scene.traverse(o => {
+            if (o.isMesh)
+            {
+                o.material = oldMaterials[o.uuid];
+            }
+        });
 
         // render brush scene
         renderer.setRenderTarget(null);

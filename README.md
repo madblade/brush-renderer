@@ -28,7 +28,7 @@ Inspired by Barbara Meier’s seminal Disney paper, _“Painterly Rendering for 
 
 ## Improvements
 
-- Sample color on multiple **CB** values.
-- Render ontop of the pre-rendered scene to remove black holes.
-- Dynamic particle distribution?
-- Better adaptive particle orientations?
+- [ ] Sample color on multiple **CB** values.
+- [x] Render ontop of the pre-rendered scene to remove black holes.
+- [ ] Dynamic particle distribution?
+- [ ] Better adaptive particle orientations?

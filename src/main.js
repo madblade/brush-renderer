@@ -48,15 +48,16 @@ let composer;
 let brushPass;
 
 // gui
-let brushSize = 20.;
+let brushSize = 12.;
 let brushPower = 2.;
-let brushOrientation = 'grad u';
+let brushOrientation = 'grad v';
 let brushNumber = 100000;
 let settings = {
     number: brushNumber,
     orientation: brushOrientation,
     size: brushSize,
     attenuation: brushPower,
+    drawOver: true
 };
 let isDoingCountdown = false;
 let timeout = null;
@@ -80,6 +81,8 @@ function updateUniforms()
         brushOrientation = settings.brushOrientation;
         brushPass.uvGradXMaterial.uniforms.useV.value = true;
         brushPass.uvGradXMaterial.uniformsNeedUpdate = true;
+        brushPass.uvGradXMaterial2.uniforms.useV.value = true;
+        brushPass.uvGradXMaterial2.uniformsNeedUpdate = true;
         brushPass.brushMaterial.uniforms.horizontalStrokes.value = false;
         // brushPass.brushMaterial.uniformsNeedUpdate = true;
     }
@@ -88,6 +91,8 @@ function updateUniforms()
         brushOrientation = settings.brushOrientation;
         brushPass.uvGradXMaterial.uniforms.useV.value = false;
         brushPass.uvGradXMaterial.uniformsNeedUpdate = true;
+        brushPass.uvGradXMaterial2.uniforms.useV.value = false;
+        brushPass.uvGradXMaterial2.uniformsNeedUpdate = true;
         brushPass.brushMaterial.uniforms.horizontalStrokes.value = false;
         // brushPass.brushMaterial.uniformsNeedUpdate = true;
     }
@@ -100,6 +105,7 @@ function updateUniforms()
     brushPass.brushMaterial.uniforms.attenuation.value = settings.attenuation;
     brushPass.brushMaterial.uniforms.pointSize.value = settings.size;
     brushPass.brushMaterial.uniformsNeedUpdate = true;
+    brushPass.drawBrushesOverScene = settings.drawOver;
 }
 function initGUI()
 {
@@ -129,6 +135,11 @@ function initGUI()
         settings.attenuation = value;
         updateUniforms();
     });
+    folder1.add(settings, 'drawOver').onChange(function(value)
+    {
+        settings.drawOver = value;
+        updateUniforms();
+    });
     gui.open();
 }
 
@@ -155,7 +166,7 @@ function initRenderer()
 function initComposer()
 {
     composer = new EffectComposer(renderer);
-    brushPass = new BrushPass(scene, camera, settings.number);
+    brushPass = new BrushPass(scene, camera, settings);
     composer.addPass(brushPass);
 }
 
