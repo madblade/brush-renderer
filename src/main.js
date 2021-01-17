@@ -3,10 +3,11 @@
  */
 
 import {
+    ACESFilmicToneMapping,
     AmbientLight,
     PCFSoftShadowMap,
     PerspectiveCamera, PointLight,
-    Scene,
+    Scene, sRGBEncoding,
     Vector3,
     WebGLRenderer
 } from 'three';
@@ -48,7 +49,7 @@ let composer;
 let brushPass;
 
 // gui
-let brushSize = 12.;
+let brushSize = 10.;
 let brushPower = 2.;
 let brushOrientation = 'grad v';
 let brushNumber = 100000;
@@ -57,7 +58,8 @@ let settings = {
     orientation: brushOrientation,
     size: brushSize,
     attenuation: brushPower,
-    drawOver: true
+    drawOver: true,
+    animate: true,
 };
 let isDoingCountdown = false;
 let timeout = null;
@@ -115,7 +117,7 @@ function initGUI()
     const brushOrientations = [
         'horizontal', 'grad u', 'grad v'
     ];
-    folder1.add(settings, 'number', 1000, 100000, 100).onChange(function(value)
+    folder1.add(settings, 'number', 1000, 150000, 100).onChange(function(value)
     {
         settings.number = value;
         updateUniforms();
@@ -140,6 +142,11 @@ function initGUI()
         settings.drawOver = value;
         updateUniforms();
     });
+    folder1.add(settings, 'animate').onChange(function(value)
+    {
+        settings.animate = value;
+        updateUniforms();
+    });
     gui.open();
 }
 
@@ -149,6 +156,9 @@ function initRenderer()
         antialias: true,
         logarithmicDepthBuffer: true
     });
+    renderer.toneMapping = ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 0.8;
+    renderer.outputEncoding = sRGBEncoding;
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.setSize(WIDTH, HEIGHT);
     document.body.appendChild(renderer.domElement);
@@ -177,13 +187,14 @@ function initScene()
     camera.position.set(0, 0, 30);
     scene.add(camera);
 
-    lightPosition = new Vector3(1, 1, 1);
-    light = new PointLight(0xffffff, 1.0);
+    lightPosition = new Vector3(1, 10, 10);
+    light = new PointLight(0xffffff, 0.5);
     light.position.copy(lightPosition);
     light.castShadow = true;
     light.shadow.camera.near = 1;
     light.shadow.camera.far = 100;
     light.shadow.bias = 0.0001;
+    light.shadow.radius = 10;
     light.shadow.mapSize.width = SHADOW_MAP_WIDTH;
     light.shadow.mapSize.height = SHADOW_MAP_HEIGHT;
     lights.push(light);
@@ -197,6 +208,7 @@ function initScene()
     controls = new OrbitControls(camera, renderer.domElement);
 }
 
+let staticMeshes = [];
 function init()
 {
     initRenderer();
@@ -210,6 +222,7 @@ function init()
     let objs = loadObjects();
     objs.forEach(o => {
         scene.add(o);
+        staticMeshes.push(o);
     });
 
     loadSkinnedMesh(scene, mixers);
@@ -217,22 +230,37 @@ function init()
 
 let time = 0;
 let lastTime = window.performance.now();
+function step(i, j)
+{
+    return i > j;
+}
 function animate()
 {
     requestAnimationFrame(animate);
 
-    let now = window.performance.now();
-    let delta = now - lastTime;
-    lastTime = now;
-    time += delta * 0.001;
-    lightPosition.x = Math.sin(time) * 10.0;
-    lightPosition.z = Math.cos(time) * 10.0 + 4.0;
-    lightPosition.y = Math.cos(time) * Math.sin(time) * 10.0;
+    if (settings.animate)
+    {
+        let now = window.performance.now();
+        let delta = now - lastTime;
+        lastTime = now;
+        time += delta * 0.001;
+        lightPosition.x = Math.sin(time) * 10.0;
+        lightPosition.z = 10 + Math.cos(time) * 10.0 + 4.0;
+        lightPosition.y = 10 + Math.cos(time) * Math.sin(time) * 10.0;
 
-    light.position.copy(lightPosition);
-
-    if (mixers.length) {
-        mixers.forEach(m => m.update(delta / 1000.));
+        for (let i = 0; i < staticMeshes.length; ++i)
+        {
+            let o = staticMeshes[i];
+            o.rotation.x += 0.02 * step(i % 3, 0);
+            o.rotation.y += 0.02 * step((i + 1) % 3, 0);
+            o.rotation.z += 0.02 * step((i + 2) % 3, 0);
+        }
+        light.position.copy(lightPosition);
+        if (mixers.length) {
+            mixers.forEach(m => m.update(delta / 1000.));
+        }
+    } else {
+        lastTime = window.performance.now();
     }
 
     // Update camera rotation and position

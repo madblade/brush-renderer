@@ -3,9 +3,8 @@
 
 [Demo available here!](https://madblade.github.io/brush-renderer/)
 
+![](https://raw.githubusercontent.com/madblade/brush-renderer/master/img/capture1.jpg)
 ![](https://raw.githubusercontent.com/madblade/brush-renderer/master/img/capture2.jpg)
-![](https://raw.githubusercontent.com/madblade/brush-renderer/master/img/capture3.jpg)
-![](https://raw.githubusercontent.com/madblade/brush-renderer/master/img/capture4.jpg)
 
 ## About
 

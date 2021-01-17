@@ -27,6 +27,7 @@ void main()
     vColor = texture2D(colorTexture, viewportCoords);
 
     // Rotation from grad of uv field
+    float mag = 1.;
     if (horizontalStrokes) {
         vRotation = 0.;
     } else {
@@ -53,7 +54,7 @@ void main()
             Gy[0][0] * tx0y0 + Gy[1][0] * tx1y0 + Gy[2][0] * tx2y0 +
             Gy[0][1] * tx0y1 + Gy[1][1] * tx1y1 + Gy[2][1] * tx2y1 +
             Gy[0][2] * tx0y2 + Gy[1][2] * tx1y2 + Gy[2][2] * tx2y2;
-        float mag = sqrt((gradX * gradX) + (gradY * gradY));
+        mag = sqrt((gradX * gradX) + (gradY * gradY));
         vRotation = atan(gradX, gradY);
 
         // if (mag < 0.05) vRotation = 0.;
@@ -67,6 +68,7 @@ void main()
     depth = 1. - texture2D(depthTexture, viewportCoords).x;
     // vPointSize *= 1. + 4.0 * pow(depth, 4.0);
     vPointSize *= 1. + pow(2., attenuation) * pow(depth, attenuation);
+    vPointSize *= (1.0 - mag);
 
     // Point size
     gl_PointSize = vPointSize * ( 300.0 / length( mvPosition.xyz ) );

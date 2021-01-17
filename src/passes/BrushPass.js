@@ -9,6 +9,7 @@ import {
     Scene, ShaderMaterial, PerspectiveCamera, TextureLoader,
     BufferGeometry,
     Points, Float32BufferAttribute, Vector2, UniformsUtils, ShaderLib,
+    sRGBEncoding,
 } from 'three';
 import { Pass }       from 'three/examples/jsm/postprocessing/Pass';
 import uvgradxv       from '../shaders/uvgradx.vertex.glsl';
@@ -39,6 +40,7 @@ let BrushPass = function(
     this.depthTexture.type = UnsignedShortType;
     this.colorTarget = new WebGLRenderTarget(this.WIDTH, this.HEIGHT, {
         format: RGBFormat,
+        encoding: sRGBEncoding,
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         generateMipmaps: false,
@@ -50,6 +52,7 @@ let BrushPass = function(
     // grad uv
     this.xFieldTarget = new WebGLRenderTarget(this.WIDTH, this.HEIGHT, {
         format: RGBFormat,
+        encoding: sRGBEncoding,
         minFilter: NearestFilter,
         magFilter: NearestFilter,
         generateMipmaps: false,
@@ -61,7 +64,7 @@ let BrushPass = function(
         uniforms:
             UniformsUtils.merge([
                 ShaderLib.lambert.uniforms,
-                { useV: { value: settings.brushOrientation === 'grad v' } }
+                { useV: { value: settings.orientation === 'grad v' } }
             ]),
         vertexShader: `
                 #include <common>
@@ -75,7 +78,7 @@ let BrushPass = function(
         uniforms:
             UniformsUtils.merge([
                 ShaderLib.lambert.uniforms,
-                { useV: { value: settings.brushOrientation === 'grad v' } }
+                { useV: { value: settings.orientation === 'grad v' } }
             ]),
         vertexShader: `
                 #include <common>
@@ -114,11 +117,24 @@ let BrushPass = function(
         transparent: true,
         vertexColors: false
     });
-    const radius = 200;
+    const radius = 110;
     this.brushGeometry = new BufferGeometry();
     const positions = [];
-    for (let i = 0; i < this.NB_BRUSHES; ++i) {
-        positions.push((Math.random() * 2 - 1) * radius);
+    let ratio = this.WIDTH / this.HEIGHT;
+    // let NB_PER_LINE = Math.sqrt(this.NB_BRUSHES);
+    // let NB_LINES = Math.sqrt(this.NB_BRUSHES);
+    // for (let i = 0; i < NB_LINES; ++i)
+    // {
+    //     for (let j = 0; j < NB_PER_LINE; ++j)
+    //     {
+    //         positions.push(110 * ratio * ((j / NB_PER_LINE + Math.random() * 0.005) * 2 - 1));
+    //         positions.push(110 * ((i / NB_LINES + Math.random() * 0.005) * 2 - 1));
+    //         positions.push(0.0);
+    //     }
+    // }
+    for (let i = 0; i < this.NB_BRUSHES; ++i)
+    {
+        positions.push((Math.random() * 2 - 1) * radius * ratio);
         positions.push((Math.random() * 2 - 1) * radius);
         positions.push(0.0);
     }
@@ -141,10 +157,11 @@ BrushPass.prototype = Object.assign(Object.create(Pass.prototype), {
 
         this.NB_BRUSHES = nbParticles;
         this.brushGeometry = new BufferGeometry();
+        let ratio = this.WIDTH / this.HEIGHT;
         const positions = [];
         for (let i = 0; i < this.NB_BRUSHES; ++i) {
-            positions.push((Math.random() * 2 - 1) * 200);
-            positions.push((Math.random() * 2 - 1) * 200);
+            positions.push((Math.random() * 2 - 1) * 110 * ratio);
+            positions.push((Math.random() * 2 - 1) * 110);
             positions.push(0.0);
         }
         this.brushGeometry.setAttribute('position', new Float32BufferAttribute(positions, 3));
@@ -160,15 +177,17 @@ BrushPass.prototype = Object.assign(Object.create(Pass.prototype), {
         renderer.autoClearDepth = false;
 
         renderer.setRenderTarget(this.colorTarget);
-        renderer.clear(); // clear color target
+        renderer.clearDepth(); // clear color target
 
         // render color + depth
         renderer.render(this.scene, this.camera);
 
         if (this.drawBrushesOverScene)
         {
+            renderer.toneMappingExposure = 0.5;
             renderer.setRenderTarget(null);
             renderer.render(this.scene, this.camera);
+            renderer.toneMappingExposure = 0.8;
         }
 
         // render grad uv

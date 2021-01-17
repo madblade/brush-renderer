@@ -6,8 +6,11 @@ import {
     FBXLoader
 } from 'three/examples/jsm/loaders/FBXLoader';
 import {
-    AnimationMixer, FrontSide,
-    Group, Mesh, MeshPhongMaterial, PlaneBufferGeometry, SphereBufferGeometry, TorusKnotBufferGeometry
+    AnimationMixer, Color, FrontSide,
+    Group, Mesh, MeshPhongMaterial,
+    PlaneBufferGeometry,
+    SphereBufferGeometry,
+    TorusKnotBufferGeometry
 } from 'three';
 
 import fbx from './data/samba.fbx';
@@ -15,43 +18,55 @@ import fbx from './data/samba.fbx';
 function moveMesh(mesh)
 {
     mesh.scale.multiplyScalar(0.2);
-    mesh.position.set(5, -25, -10);
+    // mesh.position.set(5, -25, -10);
+    mesh.position.set(0, -25, 0);
 }
 
 function loadWalls()
 {
+    let colors = [
+        new Color(1., 1., 1.),
+
+        new Color(1., 1., 1.),
+
+        new Color(1.0, 0.15, 0.05), // r
+        new Color(0.3, 1.0, 0.08), // g
+
+        new Color(1., 1., 1.),
+    ];
+
     let planes = [];
     let index = 0;
     planes.push(new Mesh(
         new PlaneBufferGeometry(50, 50),
-        new MeshPhongMaterial({ color: 0xff0000, side: FrontSide })
+        new MeshPhongMaterial({ color: colors[index], side: FrontSide })
     ));
     planes[index].position.set(0, -25, 0);
     planes[index].rotation.x = -Math.PI / 2;
     planes[index++].receiveShadow = true;
     planes.push(new Mesh(
         new PlaneBufferGeometry(50, 50),
-        new MeshPhongMaterial({ color: 0x0000ff, side: FrontSide })
+        new MeshPhongMaterial({ color: colors[index], side: FrontSide })
     ));
     planes[index].position.set(0,  0, -25);
     planes[index++].receiveShadow = true;
     planes.push(new Mesh(
         new PlaneBufferGeometry(50, 50),
-        new MeshPhongMaterial({ color: 0x00ff00, side: FrontSide })
+        new MeshPhongMaterial({ color: colors[index], side: FrontSide })
     ));
     planes[index].position.set(-25,  0, 0);
     planes[index].rotation.y = Math.PI / 2;
     planes[index++].receiveShadow = true;
     planes.push(new Mesh(
         new PlaneBufferGeometry(50, 50),
-        new MeshPhongMaterial({ color: 0x00ff00, side: FrontSide })
+        new MeshPhongMaterial({ color: colors[index], side: FrontSide })
     ));
     planes[index].position.set(25,  0, 0);
     planes[index].rotation.y = -Math.PI / 2;
     planes[index++].receiveShadow = true;
     planes.push(new Mesh(
         new PlaneBufferGeometry(50, 50),
-        new MeshPhongMaterial({ color: 0x0000ff, side: FrontSide })
+        new MeshPhongMaterial({ color: colors[index], side: FrontSide })
     ));
     planes[index].position.set(0,  0, 25);
     planes[index].rotation.y = Math.PI;
@@ -62,11 +77,15 @@ function loadWalls()
 function loadObjects()
 {
     let colors = [
-        0xff0000,
-        0xaaff00,
-        0xaaaa00,
-        0x00a0a0,
-        0xffff00
+        new Color(0.05, 0.3, 1.0),
+
+        0xffff00, // bright yellow
+
+        0xffff00, // bright yellow
+
+        new Color(0.05, 0.3, 1.0),
+
+        0xffff00 // bright yellow
     ];
     let colorIndex = 0;
 
@@ -81,7 +100,7 @@ function loadObjects()
         })
     );
     torus.scale.multiplyScalar(0.6);
-    torus.position.set(-5, -10, 5);
+    torus.position.set(-15, -10, 20);
     torus.castShadow = true;
     torus.receiveShadow = true;
 
@@ -95,9 +114,9 @@ function loadObjects()
             specular: 1.0
         })
     );
-    torus2.scale.multiplyScalar(0.5);
+    torus2.scale.multiplyScalar(0.2);
     torus2.rotation.set(0, Math.PI / 2, 0);
-    torus2.position.set(15, 5, 10);
+    torus2.position.set(15, -5, 12);
     torus2.castShadow = true;
     torus2.receiveShadow = true;
 
@@ -109,12 +128,12 @@ function loadObjects()
         new MeshPhongMaterial({
             color: colors[colorIndex++],
             specular: 1.0
-        })
+        }),
     );
     torus3.scale.multiplyScalar(0.5);
     torus3.rotation.set(0, Math.PI / 2, Math.PI / 2);
     torus3.rotation.set(0, 0, Math.PI / 2);
-    torus3.position.set(-15, 5, 10);
+    torus3.position.set(-15, -5, 15);
     torus3.castShadow = true;
     torus3.receiveShadow = true;
 
@@ -125,7 +144,7 @@ function loadObjects()
             specular: 1.0
         })
     );
-    sphere.position.set(5, -15, 15);
+    sphere.position.set(-10, -20, 15);
     sphere.castShadow = true;
     sphere.receiveShadow = true;
 
@@ -141,7 +160,7 @@ function loadObjects()
     sphere2.castShadow = true;
     sphere2.receiveShadow = true;
 
-    return [torus, torus2, torus3, sphere, sphere2];
+    return [torus2, torus3];
 }
 
 function loadSkinnedMesh(
@@ -162,6 +181,17 @@ function loadSkinnedMesh(
             {
                 c.castShadow = true;
                 c.receiveShadow = true;
+                let col = c.material.color;
+                if (col.r < 0.1)
+                    c.material = new MeshPhongMaterial({
+                        color: new Color(0.05, 0.3, 1.0),
+                        skinning: true
+                    });
+                else
+                    c.material = new MeshPhongMaterial({
+                        color: new Color(0.0, 0.0, 0.0),
+                        skinning: true
+                    });
             }
         });
 
