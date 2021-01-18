@@ -54,6 +54,8 @@ module.exports = function(env) {
         },
 
         devServer: {
+            // host: '0.0.0.0',
+            // contentBase: './dist',
             contentBase: 'http://localhost:8080/dist',
             port: 8080,
             hot: true,
